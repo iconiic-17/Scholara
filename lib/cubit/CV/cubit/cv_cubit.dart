@@ -29,6 +29,43 @@ class CvCubit extends Cubit<CvState> {
     );
   }
 
+  // ✅ يتكال لما الـ profile يكتمل — مستقل عن CV
+  Future<void> runRecommendations() async {
+    try {
+      emit(CvGeneratingRecommendations());
+
+      final opts = await _authOptions();
+      await _dio.post('/recommendations', options: opts);
+
+      final recsRes = await _dio.get(
+        '/recommendations',
+        options: await _authOptions(),
+      );
+
+      final allRecs = recsRes.data['recommendations'] as List? ?? [];
+
+      final sorted = List<dynamic>.from(allRecs)
+        ..sort((a, b) {
+          final scoreA = (a['compatibilityScore'] as num?)?.toDouble() ?? 0;
+          final scoreB = (b['compatibilityScore'] as num?)?.toDouble() ?? 0;
+          return scoreB.compareTo(scoreA);
+        });
+
+      final top3 = sorted.take(3).toList();
+
+      emit(CvRecommendationsReady(recommendations: top3));
+    } on DioException catch (e) {
+      final status = e.response?.statusCode ?? 0;
+      final msg = e.response?.data?['message'] ?? '';
+
+      if (status == 400 && msg.toString().toLowerCase().contains('profile')) {
+        emit(CvError('Please complete your profile before analysis.'));
+        return;
+      }
+      emit(CvError(msg.isNotEmpty ? msg : 'Recommendations failed'));
+    }
+  }
+
   Future<void> pickAndUploadCv() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -65,6 +102,7 @@ class CvCubit extends Cubit<CvState> {
     }
   }
 
+  // ✅ دلوقتي بتفترض إن الـ recommendations اتعملت خلاص → تعمل analysis بس
   Future<void> runFullAnalysis() async {
     if (uploadedCvUrl == null || uploadedCvUrl!.trim().isEmpty) {
       emit(CvError('Please upload a PDF file first.'));
@@ -72,58 +110,24 @@ class CvCubit extends Cubit<CvState> {
     }
 
     try {
-      emit(CvGeneratingRecommendations());
-      try {
-        await _dio.post('/recommendations', options: await _authOptions());
-      } on DioException catch (e) {
-        final status = e.response?.statusCode ?? 0;
-        final msg = e.response?.data?['message'] ?? '';
-        if (status == 400 && msg.toString().toLowerCase().contains('profile')) {
-          emit(CvError('Please complete your profile before analysis.'));
-          return;
-        }
-        if (status != 400 && status != 200) {
-          emit(CvError(msg.isNotEmpty ? msg : 'Recommendations failed'));
-          return;
-        }
-      }
-
       emit(CvAnalyzing());
-      try {
-        final analyzeOpts = await _authOptions(
-          receiveTimeout: const Duration(minutes: 10),
-          sendTimeout: const Duration(minutes: 3),
-          contentType: _cvFilePath != null ? 'multipart/form-data' : null,
-        );
 
-        if (_cvFilePath != null) {
-          final formData = FormData.fromMap({
-            'file': await MultipartFile.fromFile(
-              _cvFilePath!,
-              filename: _cvFileName,
-            ),
-          });
-          await _dio.post('/cv/analyze', data: formData, options: analyzeOpts);
-        } else {
-          await _dio.post('/cv/analyze', options: analyzeOpts);
-        }
-      } on DioException catch (e) {
-        final status = e.response?.statusCode ?? 0;
-        final isTimeout =
-            e.type == DioExceptionType.receiveTimeout ||
-            e.type == DioExceptionType.sendTimeout ||
-            e.type == DioExceptionType.connectionTimeout;
+      final analyzeOpts = await _authOptions(
+        receiveTimeout: const Duration(minutes: 10),
+        sendTimeout: const Duration(minutes: 3),
+        contentType: _cvFilePath != null ? 'multipart/form-data' : null,
+      );
 
-        if (isTimeout && status == 0) {
-          emit(CvError('Analysis request timed out. Please try again.'));
-          return;
-        }
-        if (status != 200 && status != 202) {
-          emit(
-            CvError(e.response?.data?['message'] ?? 'Analysis trigger failed'),
-          );
-          return;
-        }
+      if (_cvFilePath != null) {
+        final formData = FormData.fromMap({
+          'file': await MultipartFile.fromFile(
+            _cvFilePath!,
+            filename: _cvFileName,
+          ),
+        });
+        await _dio.post('/cv/analyze', data: formData, options: analyzeOpts);
+      } else {
+        await _dio.post('/cv/analyze', options: analyzeOpts);
       }
 
       final analysis = await _pollAnalysis();
@@ -137,8 +141,19 @@ class CvCubit extends Cubit<CvState> {
         options: await _authOptions(),
       );
       final recs = recsRes.data['recommendations'] ?? [];
+
       emit(CvAnalyzed(analysis: analysis, recommendations: recs));
     } on DioException catch (e) {
+      final isTimeout =
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionTimeout;
+
+      if (isTimeout && (e.response?.statusCode ?? 0) == 0) {
+        emit(CvError('Analysis request timed out. Please try again.'));
+        return;
+      }
+
       emit(CvError(e.response?.data?['message'] ?? 'Something went wrong'));
     }
   }

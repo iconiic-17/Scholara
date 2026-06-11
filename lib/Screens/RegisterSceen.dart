@@ -2,6 +2,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grantgo/Screens/LoginScreen.dart';
+import 'package:grantgo/Screens/OtpScreen.dart';
 import 'package:grantgo/cubit/register/register_cubit.dart';
 import 'package:grantgo/cubit/register/register_state.dart';
 import 'package:grantgo/widgets/customTextField.dart';
@@ -64,20 +65,11 @@ class _RegistersceenState extends State<Registersceen>
       create: (context) => RegisterCubit(),
       child: BlocConsumer<RegisterCubit, RegisterState>(
         listener: (context, state) {
-          if (state is RegisterSuccess) {
-            AwesomeDialog(
-              context: context,
-              dialogType: DialogType.success,
-              animType: AnimType.rightSlide,
-              title: 'Done',
-              desc: 'Registered Successfully!',
-            ).show().then((_) {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const Loginscreen()),
-                (route) => false,
-              );
-            });
+          if (state is RegisterOtpRequired) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => OtpScreen(email: state.email)),
+            );
           }
           if (state is RegisterFailure) {
             AwesomeDialog(
@@ -94,7 +86,6 @@ class _RegistersceenState extends State<Registersceen>
             backgroundColor: bgDark,
             body: Stack(
               children: [
-                // Glow top-right
                 Positioned(
                   top: -60,
                   right: -60,
@@ -109,7 +100,6 @@ class _RegistersceenState extends State<Registersceen>
                     ),
                   ),
                 ),
-                // Glow bottom-left
                 Positioned(
                   bottom: 80,
                   left: -40,
@@ -132,7 +122,6 @@ class _RegistersceenState extends State<Registersceen>
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          // Header
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
@@ -209,7 +198,6 @@ class _RegistersceenState extends State<Registersceen>
 
                           const SizedBox(height: 32),
 
-                          // Form
                           Form(
                             key: formstate,
                             child: Padding(
@@ -304,7 +292,6 @@ class _RegistersceenState extends State<Registersceen>
 
                                   const SizedBox(height: 8),
 
-                                  // Register button
                                   GestureDetector(
                                     onTap: state is RegisterLoading
                                         ? null
@@ -366,7 +353,6 @@ class _RegistersceenState extends State<Registersceen>
 
                                   const SizedBox(height: 20),
 
-                                  // Already have account
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [

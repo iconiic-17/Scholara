@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grantgo/Services/token_storage.dart';
 import 'package:grantgo/Screens/WelcomeScreen.dart';
+import 'package:grantgo/cubit/CV/cubit/cv_cubit.dart';
 import 'package:grantgo/cubit/profile/cubit/profile_cubit.dart';
 import 'package:grantgo/cubit/profile/cubit/profile_state.dart';
 
@@ -35,7 +36,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isEditing = false;
 
-  // لوائح محلية لإدارة التعديلات الإضافية ديناميكياً لتطابق الـ API
   List<String> _currentSkills = [];
   List<String> _currentCertificates = [];
   List<Map<String, String>> _currentLanguages = [];
@@ -71,7 +71,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     gpaController.text = user['gpa']?.toString() ?? '';
     cvUrlController.text = user['cvUrl'] ?? '';
 
-    // ملء القوائم المحلية من بيانات السيرفر مباشرة
     _currentSkills = _parseStringList(user['skills']);
     _currentCertificates = _parseStringList(user['certificates']);
     _currentLanguages = _parseLanguages(user['languages']);
@@ -84,6 +83,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (state is ProfileSuccess) _fillControllers(state.user);
         if (state is ProfileUpdateSuccess) {
           setState(() => _isEditing = false);
+
+          // ✅ شغّل الـ recommendations بعد حفظ الـ profile
+          context.read<CvCubit>().runRecommendations();
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -108,7 +111,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: kBgColor,
           body: Stack(
             children: [
-              // Glow effects
               Positioned(
                 top: -60,
                 right: -60,
@@ -137,7 +139,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-
               SafeArea(
                 child: state is ProfileLoading && !_isEditing
                     ? const Center(
@@ -169,6 +170,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   label: 'Age',
                                   controller: ageController,
                                   keyboardType: TextInputType.number,
+                                ),
+                                _editableTile(
+                                  icon: Icons.pentagon,
+                                  label: 'nationality',
+                                  controller: nationalityController,
                                 ),
                                 _editableTile(
                                   icon: Icons.location_on_outlined,
@@ -227,8 +233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _currentCertificates,
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            _buildExperienceSection(user['experience']),
+
                             const SizedBox(height: 20),
                             _buildSection(
                               title: 'CV',
@@ -293,7 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return [];
   }
 
-  // ── Popups الحوارية الجاهزة للإضافة الدقيقة ────────────────────────
+  // ── Popups ────────────────────────────────────────────────
 
   void _showAddChipDialog(String type, List<String> targetList) {
     final TextEditingController inputController = TextEditingController();

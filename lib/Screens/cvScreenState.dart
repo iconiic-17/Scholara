@@ -143,9 +143,8 @@ class CvScreen extends StatelessWidget {
                           },
                           builder: (context, state) {
                             final cubit = context.read<CvCubit>();
-                            final isBusy =
-                                state is CvGeneratingRecommendations ||
-                                state is CvAnalyzing;
+                            final isBusy = state is CvAnalyzing;
+
                             return SingleChildScrollView(
                               padding: const EdgeInsets.fromLTRB(
                                 20,
@@ -173,10 +172,6 @@ class CvScreen extends StatelessWidget {
                                   if (state is CvAnalyzed) ...[
                                     const SizedBox(height: 20),
                                     _buildAnalysisResult(state.analysis),
-                                    const SizedBox(height: 20),
-                                    _buildRecommendations(
-                                      state.recommendations,
-                                    ),
                                   ],
                                 ],
                               ),
@@ -184,6 +179,7 @@ class CvScreen extends StatelessWidget {
                           },
                         ),
 
+                        // Tab 2 — Motivation Letter
                         BlocProvider(
                           create: (_) => MotivationCubit(Dio()),
                           child: const MotivationView(),
@@ -257,10 +253,8 @@ class CvScreen extends StatelessWidget {
   Widget _buildCvCard(CvState state, CvCubit cubit) {
     final isUploading = state is CvUploading;
     final hasCV =
-        state is CvUploaded ||
-        state is CvGeneratingRecommendations ||
-        state is CvAnalyzing ||
-        state is CvAnalyzed;
+        state is CvUploaded || state is CvAnalyzing || state is CvAnalyzed;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -383,7 +377,7 @@ class CvScreen extends StatelessWidget {
   }
 
   Widget _buildAnalyzeButton(CvState state, CvCubit cubit) {
-    final isBusy = state is CvGeneratingRecommendations || state is CvAnalyzing;
+    final isBusy = state is CvAnalyzing;
     return GestureDetector(
       onTap: isBusy ? null : cubit.runFullAnalysis,
       child: Container(
@@ -433,10 +427,6 @@ class CvScreen extends StatelessWidget {
 
   Widget _buildProgressSteps(CvState state) {
     final steps = [
-      {
-        'label': 'Generating Recommendations',
-        'done': state is CvAnalyzing || state is CvAnalyzed,
-      },
       {'label': 'Analyzing your CV with AI', 'done': state is CvAnalyzed},
     ];
     return Container(
@@ -751,166 +741,6 @@ class CvScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecommendations(List<dynamic> recs) {
-    if (recs.isEmpty) return const SizedBox();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            ShaderMask(
-              shaderCallback: (b) => const LinearGradient(
-                colors: [kBlueLight, kPurpleLight],
-              ).createShader(b),
-              child: const Text(
-                'AI Recommendations',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: kBlue.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: kBlue.withOpacity(0.3)),
-              ),
-              child: Text(
-                '${recs.length} matches',
-                style: const TextStyle(
-                  color: kBlueLight,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        ...recs.map((rec) => _recCard(rec as Map<String, dynamic>)),
-      ],
-    );
-  }
-
-  Widget _recCard(Map<String, dynamic> rec) {
-    final scholarship = rec['scholarshipId'] as Map<String, dynamic>? ?? {};
-    final title = scholarship['title'] ?? 'Scholarship';
-    final score = rec['compatibilityScore'] ?? 0;
-    final funding = scholarship['fundingType'] ?? '—';
-    final degree = (scholarship['degree'] as List?)?.join(', ') ?? '—';
-    final deadline = scholarship['deadline']?.toString().substring(0, 10);
-    final matchValue = (score is num)
-        ? score.toInt()
-        : int.tryParse(score.toString()) ?? 0;
-    final matchColor = matchValue >= 80
-        ? kGreen
-        : matchValue >= 60
-        ? kBlueLight
-        : kPurpleLight;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: kBgCard,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: kBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: matchColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-              border: Border.all(color: matchColor.withOpacity(0.4), width: 2),
-            ),
-            child: Center(
-              child: Text(
-                matchValue.toStringAsFixed(0),
-                style: TextStyle(
-                  color: matchColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                  ),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    _miniTag(funding.toString(), kGreen),
-                    const SizedBox(width: 6),
-                    _miniTag(degree.toString(), kBlueLight),
-                  ],
-                ),
-                if (deadline != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Deadline: $deadline',
-                    style: const TextStyle(color: kTextMuted, fontSize: 11),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 14,
-            color: Colors.white.withOpacity(0.2),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _miniTag(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.25)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

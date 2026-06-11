@@ -13,6 +13,11 @@ class CvUploaded extends CvState {
 
 class CvGeneratingRecommendations extends CvState {}
 
+class CvRecommendationsReady extends CvState {
+  final List<dynamic> recommendations;
+  CvRecommendationsReady({required this.recommendations});
+}
+
 class CvAnalyzing extends CvState {}
 
 class CvAnalyzed extends CvState {

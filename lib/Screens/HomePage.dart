@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grantgo/Model/scholarship_model.dart';
+import 'package:grantgo/Screens/RecommendationScreen.dart';
 import 'package:grantgo/Screens/SavedScreen.dart';
 import 'package:grantgo/Screens/ProfileScreen.dart';
 import 'package:grantgo/Screens/cvScreenState.dart';
@@ -18,36 +19,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final TextEditingController searchController = TextEditingController();
-  final ScrollController scrollController = ScrollController();
   late AnimationController _animationController;
 
   int _currentIndex = 0;
 
-  String? selectedDegree;
-  String? selectedFunding;
-  String? selectedGender;
-
-  final List<String> degrees = ['Bachelor', 'Master', 'PhD'];
-  final List<String> fundingTypes = [
-    'Fully',
-    'Partial',
-    'Fully / Partial',
-    'Unknown',
-  ];
-  final List<String> genders = ['Male', 'Female', 'Both'];
-
-  ScholarshipsCubit cubit = ScholarshipsCubit();
-  bool isFetchingMore = false;
-
-  final Set<String> savedScholarshipIds = {};
-
   static const Color kBgColor = Color(0xFF0A0F1D);
   static const Color kCardColor = Color(0xFF141C2F);
   static const Color kPrimaryColor = Color(0xFF6366F1);
-  static const Color kSecondaryColor = Color(0xFF38BDF8);
   static const Color kBorderColor = Color(0xFF222F4A);
   static const Color kTextMuted = Color(0xFF64748B);
+  static const Color kSecondaryColor = Color(0xFF38BDF8);
 
   @override
   void initState() {
@@ -56,113 +37,12 @@ class _HomeScreenState extends State<HomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
-    cubit.getScholarships();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final savedCubit = context.read<SavedScholarshipsCubit>();
-      await savedCubit.fetchSavedScholarships();
-      final state = savedCubit.state;
-      if (state is SavedScholarshipsSuccess) {
-        setState(() {
-          savedScholarshipIds.addAll(
-            state.savedScholarships.map((s) => s.id.toString()),
-          );
-        });
-      }
-    });
-
-    scrollController.addListener(() {
-      if (scrollController.position.pixels >=
-          scrollController.position.maxScrollExtent - 200) {
-        _loadMore();
-      }
-    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    searchController.dispose();
-    scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMore() {
-    if (isFetchingMore) return;
-    if (cubit.currentPage >= cubit.totalPages) return;
-    setState(() => isFetchingMore = true);
-    cubit
-        .getScholarships(
-          search: searchController.text,
-          fundingType: selectedFunding,
-          degree: selectedDegree,
-          gender: selectedGender,
-          page: cubit.currentPage + 1,
-        )
-        .then((_) => setState(() => isFetchingMore = false));
-  }
-
-  void _applyFilters() {
-    _animationController.reset();
-    _animationController.forward();
-    cubit.getScholarships(
-      search: searchController.text,
-      fundingType: selectedFunding,
-      degree: selectedDegree,
-      gender: selectedGender,
-      page: 1,
-    );
-  }
-
-  Color _fundingColor(String type) {
-    switch (type) {
-      case 'Fully':
-        return const Color(0xFF10B981);
-      case 'Partial':
-        return const Color(0xFFF59E0B);
-      default:
-        return kSecondaryColor;
-    }
-  }
-
-  IconData _fundingIcon(String type) {
-    switch (type) {
-      case 'Fully':
-        return Icons.verified_user_rounded;
-      case 'Partial':
-        return Icons.pie_chart_rounded;
-      default:
-        return Icons.help_center_rounded;
-    }
-  }
-
-  void _toggleSaveScholarship(ScholarshipModel scholarship) {
-    final String scholarshipId = scholarship.id.toString();
-    final savedCubit = context.read<SavedScholarshipsCubit>();
-
-    setState(() {
-      if (savedScholarshipIds.contains(scholarshipId)) {
-        savedScholarshipIds.remove(scholarshipId);
-        savedCubit.removeSavedScholarship(scholarshipId);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Removed from Saved Opportunities'),
-            backgroundColor: Color(0xFFEF4444),
-            duration: Duration(seconds: 1),
-          ),
-        );
-      } else {
-        savedScholarshipIds.add(scholarshipId);
-        savedCubit.saveScholarship(scholarshipId);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Scholarship saved successfully!'),
-            backgroundColor: Color(0xFF10B981),
-            duration: Duration(seconds: 1),
-          ),
-        );
-      }
-    });
   }
 
   Widget _navItem({
@@ -217,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isActive
               ? kPrimaryColor.withOpacity(0.15)
@@ -265,65 +145,69 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => cubit,
-      child: Scaffold(
-        backgroundColor: kBgColor,
-        body: IndexedStack(
-          index: _currentIndex,
-          children: const [
-            _ExplorePage(),
-            SavedPage(),
-            CvScreen(),
-            ProfileScreen(),
+    return Scaffold(
+      backgroundColor: kBgColor,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: const [
+          _ExplorePage(), // 0
+          SavedPage(), // 1
+          CvScreen(), // 2 — center (CV)
+          RecommendationsScreen(), // 3
+          ProfileScreen(), // 4
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: kCardColor,
+          border: Border(top: BorderSide(color: kBorderColor, width: 1.2)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
           ],
         ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: kCardColor,
-            border: Border(top: BorderSide(color: kBorderColor, width: 1.2)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _navItem(
-                    icon: Icons.explore_outlined,
-                    activeIcon: Icons.explore_rounded,
-                    label: 'Explore',
-                    index: 0,
-                  ),
-                  _navItem(
-                    icon: Icons.bookmark_border_rounded,
-                    activeIcon: Icons.bookmark_rounded,
-                    label: 'Saved',
-                    index: 1,
-                  ),
-                  // ── CV زرار النص ──
-                  _navItem(
-                    icon: Icons.description_outlined,
-                    activeIcon: Icons.description_rounded,
-                    label: 'CV',
-                    index: 2,
-                    isCenter: true,
-                  ),
-                  _navItem(
-                    icon: Icons.person_outline_rounded,
-                    activeIcon: Icons.person_rounded,
-                    label: 'Profile',
-                    index: 3,
-                  ),
-                ],
-              ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem(
+                  icon: Icons.explore_outlined,
+                  activeIcon: Icons.explore_rounded,
+                  label: 'Explore',
+                  index: 0,
+                ),
+                _navItem(
+                  icon: Icons.bookmark_border_rounded,
+                  activeIcon: Icons.bookmark_rounded,
+                  label: 'Saved',
+                  index: 1,
+                ),
+                _navItem(
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Profile',
+                  index: 4,
+                ),
+                _navItem(
+                  icon: Icons.auto_awesome_outlined,
+                  activeIcon: Icons.auto_awesome_rounded,
+                  label: 'Matches',
+                  index: 3,
+                ),
+
+                _navItem(
+                  icon: Icons.description_outlined,
+                  activeIcon: Icons.description_rounded,
+                  label: 'CV',
+                  index: 2,
+                  isCenter: true,
+                ),
+              ],
             ),
           ),
         ),
@@ -332,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// ── Explore Page extracted ──
+// ── Explore Page ──
 class _ExplorePage extends StatefulWidget {
   const _ExplorePage();
 
@@ -347,6 +231,8 @@ class _ExplorePageState extends State<_ExplorePage> {
   String? selectedDegree;
   String? selectedFunding;
   String? selectedGender;
+  String? selectedLocation;
+  String? selectedDeadline;
 
   final List<String> degrees = ['Bachelor', 'Master', 'PhD'];
   final List<String> fundingTypes = [
@@ -356,6 +242,7 @@ class _ExplorePageState extends State<_ExplorePage> {
     'Unknown',
   ];
   final List<String> genders = ['Male', 'Female', 'Both'];
+  final List<String> deadlines = ['1month', '3months', '6months'];
 
   ScholarshipsCubit cubit = ScholarshipsCubit();
   bool isFetchingMore = false;
@@ -405,15 +292,15 @@ class _ExplorePageState extends State<_ExplorePage> {
     if (isFetchingMore) return;
     if (cubit.currentPage >= cubit.totalPages) return;
     setState(() => isFetchingMore = true);
-    cubit
-        .getScholarships(
-          search: searchController.text,
-          fundingType: selectedFunding,
-          degree: selectedDegree,
-          gender: selectedGender,
-          page: cubit.currentPage + 1,
-        )
-        .then((_) => setState(() => isFetchingMore = false));
+    cubit.getScholarships(
+      search: searchController.text,
+      fundingType: selectedFunding,
+      degree: selectedDegree,
+      gender: selectedGender,
+      location: selectedLocation,
+      deadlineWithin: selectedDeadline,
+      page: cubit.currentPage + 1,
+    );
   }
 
   void _applyFilters() {
@@ -422,6 +309,8 @@ class _ExplorePageState extends State<_ExplorePage> {
       fundingType: selectedFunding,
       degree: selectedDegree,
       gender: selectedGender,
+      location: selectedLocation,
+      deadlineWithin: selectedDeadline,
       page: 1,
     );
   }
@@ -653,43 +542,88 @@ class _ExplorePageState extends State<_ExplorePage> {
         children: [
           if (selectedDegree != null ||
               selectedFunding != null ||
-              selectedGender != null)
+              selectedGender != null ||
+              selectedLocation != null ||
+              selectedDeadline != null)
             _clearChip(),
+
           _filterChip(
             label: selectedDegree ?? 'Degree',
             icon: Icons.school_rounded,
             isActive: selectedDegree != null,
             items: degrees,
             onSelected: (val) {
-              setState(
-                () => selectedDegree = val == selectedDegree ? null : val,
-              );
+              setState(() {
+                selectedDegree = val == selectedDegree ? null : val;
+              });
               _applyFilters();
             },
           ),
+
           const SizedBox(width: 8),
+
           _filterChip(
             label: selectedFunding ?? 'Funding',
             icon: Icons.account_balance_wallet_rounded,
             isActive: selectedFunding != null,
             items: fundingTypes,
             onSelected: (val) {
-              setState(
-                () => selectedFunding = val == selectedFunding ? null : val,
-              );
+              setState(() {
+                selectedFunding = val == selectedFunding ? null : val;
+              });
               _applyFilters();
             },
           ),
+
           const SizedBox(width: 8),
+
           _filterChip(
             label: selectedGender ?? 'Gender',
             icon: Icons.wc_rounded,
             isActive: selectedGender != null,
             items: genders,
             onSelected: (val) {
-              setState(
-                () => selectedGender = val == selectedGender ? null : val,
-              );
+              setState(() {
+                selectedGender = val == selectedGender ? null : val;
+              });
+              _applyFilters();
+            },
+          ),
+
+          const SizedBox(width: 8),
+
+          _filterChip(
+            label: selectedLocation ?? 'Location',
+            icon: Icons.location_on_rounded,
+            isActive: selectedLocation != null,
+            items: [
+              'Germany',
+              'USA',
+              'Canada',
+              'UK',
+              'Australia',
+              'France',
+              'Italy',
+            ],
+            onSelected: (val) {
+              setState(() {
+                selectedLocation = val == selectedLocation ? null : val;
+              });
+              _applyFilters();
+            },
+          ),
+
+          const SizedBox(width: 8),
+
+          _filterChip(
+            label: selectedDeadline ?? 'Deadline',
+            icon: Icons.calendar_month_rounded,
+            isActive: selectedDeadline != null,
+            items: deadlines,
+            onSelected: (val) {
+              setState(() {
+                selectedDeadline = val == selectedDeadline ? null : val;
+              });
               _applyFilters();
             },
           ),
@@ -1086,6 +1020,8 @@ class _ExplorePageState extends State<_ExplorePage> {
           selectedDegree = null;
           selectedFunding = null;
           selectedGender = null;
+          selectedLocation = null;
+          selectedDeadline = null;
           searchController.clear();
         });
         _applyFilters();

@@ -65,23 +65,13 @@ class _LoginscreenState extends State<Loginscreen>
           if (token != null && context.mounted) {
             context.read<SavedScholarshipsCubit>().updateToken(token);
           }
-          AwesomeDialog(
-            context: context,
-            dialogType: DialogType.success,
-            animType: AnimType.rightSlide,
-            title: 'Success',
-            titleTextStyle: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-            desc: 'Welcome Back to Scholara!',
-            descTextStyle: const TextStyle(color: Colors.white70),
-          ).show();
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-          );
+          if (context.mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              (route) => false,
+            );
+          }
         }
         if (state is LoginFailure) {
           AwesomeDialog(
@@ -131,7 +121,6 @@ class _LoginscreenState extends State<Loginscreen>
                   ),
                 ),
               ),
-
               FadeTransition(
                 opacity: _fadeAnim ?? const AlwaysStoppedAnimation(1.0),
                 child: SlideTransition(

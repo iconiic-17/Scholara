@@ -17,6 +17,7 @@ class LoginCubit extends Cubit<LoginState> {
       if (response.statusCode == 200) {
         await TokenStorage.saveToken(response.data['token']);
         emit(LoginSuccess());
+        print(response.data['token']);
       } else {
         emit(LoginFailure("Login Failed"));
       }

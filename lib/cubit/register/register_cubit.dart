@@ -19,7 +19,7 @@ class RegisterCubit extends Cubit<RegisterState> {
         },
       );
       if (response.statusCode == 201) {
-        emit(RegisterSuccess());
+        emit(RegisterOtpRequired(response.data['email']));
       } else {
         emit(RegisterFailure("Register Failed"));
       }

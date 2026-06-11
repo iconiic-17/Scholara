@@ -17,3 +17,10 @@ class RegisterFailure extends RegisterState {
   @override
   List<Object> get props => [error];
 }
+
+class RegisterOtpRequired extends RegisterState {
+  final String email;
+  RegisterOtpRequired(this.email);
+  @override
+  List<Object> get props => [email];
+}

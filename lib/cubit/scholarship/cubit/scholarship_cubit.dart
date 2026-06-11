@@ -18,6 +18,8 @@ class ScholarshipsCubit extends Cubit<ScholarshipsState> {
     String? degree,
     String? nationality,
     String? gender,
+    String? location,
+    String? deadlineWithin,
     int page = 1,
   }) async {
     try {
@@ -32,6 +34,13 @@ class ScholarshipsCubit extends Cubit<ScholarshipsState> {
       if (degree != null) queryParams['degree'] = degree;
       if (nationality != null) queryParams['nationality'] = nationality;
       if (gender != null) queryParams['gender'] = gender;
+      if (location != null && location.isNotEmpty) {
+        queryParams['location'] = location;
+      }
+
+      if (deadlineWithin != null && deadlineWithin.isNotEmpty) {
+        queryParams['deadlineWithin'] = deadlineWithin;
+      }
 
       final response = await appDio.get(
         '/scholarships',
