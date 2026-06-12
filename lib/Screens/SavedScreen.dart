@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:grantgo/Screens/aboutScholarshipScreen.dart';
 import 'package:grantgo/cubit/scholarship/cubit/saved_scholarship_cubit.dart';
 import 'package:grantgo/cubit/scholarship/cubit/saved_scholarship_state.dart';
 
@@ -214,6 +215,7 @@ class _SavedPageState extends State<SavedPage> {
   Widget _savedCard(dynamic s) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.hardEdge, // ✅ prevent overflow
       decoration: BoxDecoration(
         color: kCardColor,
         borderRadius: BorderRadius.circular(22),
@@ -226,95 +228,109 @@ class _SavedPageState extends State<SavedPage> {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            splashColor: kPrimaryColor.withOpacity(0.1),
-            highlightColor: kPrimaryColor.withOpacity(0.05),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Row 1: Location & [Funding Badge + Delete Button]
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: kBgColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.g_translate_rounded,
-                                size: 14,
-                                color: kSecondaryColor,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                s.location.toUpperCase(),
-                                style: const TextStyle(
-                                  color: kSecondaryColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Row(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    AboutScholarshipScreen(scholarshipId: s.id.toString()),
+              ),
+            );
+          },
+          splashColor: kPrimaryColor.withOpacity(0.1),
+          highlightColor: kPrimaryColor.withOpacity(0.05),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header Row: Location & [Funding Badge + Delete] ──
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: _fundingColor(
-                                s.fundingType,
-                              ).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: _fundingColor(
-                                  s.fundingType,
-                                ).withOpacity(0.25),
-                                width: 1,
-                              ),
+                              color: kBgColor,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _fundingIcon(s.fundingType),
-                                  size: 12,
-                                  color: _fundingColor(s.fundingType),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  s.fundingType,
-                                  style: TextStyle(
-                                    color: _fundingColor(s.fundingType),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
+                            child: const Icon(
+                              Icons.g_translate_rounded,
+                              size: 14,
+                              color: kSecondaryColor,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          // زرار الحذف
+                          Expanded(
+                            child: Text(
+                              s.location.toUpperCase(),
+                              style: const TextStyle(
+                                color: kSecondaryColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // ✅ Flexible to prevent overflow on right side
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _fundingColor(
+                                  s.fundingType,
+                                ).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: _fundingColor(
+                                    s.fundingType,
+                                  ).withOpacity(0.25),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _fundingIcon(s.fundingType),
+                                    size: 12,
+                                    color: _fundingColor(s.fundingType),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      s.fundingType,
+                                      style: TextStyle(
+                                        color: _fundingColor(s.fundingType),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Delete button
                           GestureDetector(
                             onTap: () {
                               context
@@ -342,94 +358,157 @@ class _SavedPageState extends State<SavedPage> {
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
-                  Text(
-                    s.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      height: 1.4,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // ── Title ──
+                Text(
+                  s.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
                   ),
-                  const SizedBox(height: 16),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16),
 
-                  Container(height: 1, color: kBorderColor.withOpacity(0.6)),
-                  const SizedBox(height: 14),
+                Container(height: 1, color: kBorderColor.withOpacity(0.6)),
+                const SizedBox(height: 14),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: (s.degree as List).map((d) {
-                            return Container(
+                // ── Degree ──
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: (s.degree as List).map((d) {
+                    return ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 120),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: kBgColor,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: kBorderColor),
+                        ),
+                        child: Text(
+                          d,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.85),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+                // ── Deadline ──
+                if (s.deadline != null && s.deadline.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFFEF4444).withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 11,
+                          color: Color(0xFFF87171),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          s.deadline.length >= 10
+                              ? s.deadline.substring(0, 10)
+                              : s.deadline,
+                          style: const TextStyle(
+                            color: Color(0xFFF87171),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // ── Fields of Study ✅ ──
+                if (s.fieldsOfStudy != null &&
+                    (s.fieldsOfStudy as List).isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: (s.fieldsOfStudy as List)
+                        .take(3) // ✅ max 3
+                        .map(
+                          (f) => ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 140),
+                            child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: kBgColor,
+                                color: const Color(
+                                  0xFF7C3AED,
+                                ).withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: kBorderColor),
-                              ),
-                              child: Text(
-                                d,
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.85),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFF7C3AED,
+                                  ).withOpacity(0.25),
                                 ),
                               ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      if (s.deadline != null && s.deadline.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEF4444).withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: const Color(0xFFEF4444).withOpacity(0.2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.menu_book_outlined,
+                                    size: 11,
+                                    color: Color(0xFFA78BFA),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      f,
+                                      style: const TextStyle(
+                                        color: Color(0xFFA78BFA),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today_rounded,
-                                size: 11,
-                                color: Color(0xFFF87171),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                s.deadline.length >= 10
-                                    ? s.deadline.substring(0, 10)
-                                    : s.deadline,
-                                style: const TextStyle(
-                                  color: Color(0xFFF87171),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
+                        )
+                        .toList(),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
         ),

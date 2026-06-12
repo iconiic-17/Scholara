@@ -37,7 +37,7 @@ class _SplashscreenState extends State<Splashscreen>
   }
 
   Future<void> navigateToWelcome() async {
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(const Duration(seconds: 6));
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,

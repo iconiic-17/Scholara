@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:grantgo/Screens/aboutScholarshipScreen.dart';
 import 'package:grantgo/cubit/CV/cubit/cv_cubit.dart';
 
-class RecommendationsScreen extends StatelessWidget {
+class RecommendationsScreen extends StatefulWidget {
   const RecommendationsScreen({super.key});
 
+  @override
+  State<RecommendationsScreen> createState() => _RecommendationsScreenState();
+}
+
+class _RecommendationsScreenState extends State<RecommendationsScreen> {
   static const Color kBgDark = Color(0xFF0A0F1E);
   static const Color kBgCard = Color(0xFF0D1426);
   static const Color kBlue = Color(0xFF2563EB);
@@ -15,6 +21,20 @@ class RecommendationsScreen extends StatelessWidget {
   static const Color kOrange = Color(0xFFFBBF24);
   static const Color kBorder = Color(0xFF1E2A40);
   static const Color kTextMuted = Color(0x99FFFFFF);
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ لما الشاشة تفتح، اتحقق من الـ state الحالي
+    // لو مفيش recommendations موجودة، نجيبها تلقائياً
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = context.read<CvCubit>().state;
+      final hasRecs = state is CvAnalyzed || state is CvRecommendationsReady;
+      if (!hasRecs) {
+        context.read<CvCubit>().runRecommendations();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +65,7 @@ class RecommendationsScreen extends StatelessWidget {
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, i) =>
-                            _recCard(recs[i] as Map<String, dynamic>),
+                            _recCard(recs[i] as Map<String, dynamic>, i),
                         childCount: recs.length,
                       ),
                     ),
@@ -166,7 +186,6 @@ class RecommendationsScreen extends StatelessWidget {
                   TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.0, end: 1.0),
                     duration: const Duration(seconds: 2),
-
                     builder: (context, value, child) {
                       return Container(
                         width: 110,
@@ -241,23 +260,29 @@ class RecommendationsScreen extends StatelessWidget {
     );
   }
 
-  Widget _recCard(Map<String, dynamic> rec) {
+  Widget _recCard(Map<String, dynamic> rec, int index) {
     final scholarship = rec['scholarshipId'] as Map<String, dynamic>? ?? {};
     final title = scholarship['title'] ?? 'Scholarship Opportunity';
-    final score = rec['compatibilityScore'] ?? 0;
     final funding = scholarship['fundingType'] ?? '—';
     final degree = (scholarship['degree'] as List?)?.join(', ') ?? '—';
+    final fieldsOfStudy =
+        (scholarship['fieldsOfStudy'] as List?)?.join(', ') ?? '—';
+    final location = scholarship['location'] ?? '—';
     final deadline = scholarship['deadline']?.toString().substring(0, 10);
 
-    final matchVal = (score is num)
-        ? score.toInt()
-        : int.tryParse(score.toString()) ?? 0;
-
-    final matchColor = matchVal >= 80
+    final color = index == 0
         ? kGreen
-        : matchVal >= 60
-        ? kBlueLight
+        : index == 1
+        ? kOrange
         : kPurpleLight;
+
+    final icon = index == 0
+        ? Icons.workspace_premium_rounded
+        : index == 1
+        ? Icons.military_tech_rounded
+        : Icons.star_rounded;
+
+    final label = index == 0 ? 'Top Pick' : '#${index + 1} Pick';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -274,7 +299,17 @@ class RecommendationsScreen extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            final scholarshipId = scholarship['_id'] as String?;
+            if (scholarshipId == null) return;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    AboutScholarshipScreen(scholarshipId: scholarshipId),
+              ),
+            );
+          },
           splashColor: kBlue.withOpacity(0.05),
           highlightColor: Colors.transparent,
           child: Padding(
@@ -282,39 +317,31 @@ class RecommendationsScreen extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 📊 الـ Custom Progress Indicator المحترف لنسبة المطابقة
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 58,
-                      height: 58,
-                      child: CircularProgressIndicator(
-                        value: matchVal / 100,
-                        backgroundColor: Colors.white.withOpacity(0.03),
-                        valueColor: AlwaysStoppedAnimation<Color>(matchColor),
-                        strokeWidth: 3.5,
-                      ),
-                    ),
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: matchColor.withOpacity(0.06),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$matchVal%',
-                          style: TextStyle(
-                            color: matchColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                          ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: color.withOpacity(0.4), width: 1),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, color: color, size: 18),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -347,6 +374,16 @@ class RecommendationsScreen extends StatelessWidget {
                             degree.toString(),
                             kBlueLight,
                             Icons.school_outlined,
+                          ),
+                          _miniTag(
+                            fieldsOfStudy,
+                            kPurpleLight,
+                            Icons.menu_book_outlined,
+                          ),
+                          _miniTag(
+                            location.toString(),
+                            Colors.orange,
+                            Icons.location_on_outlined,
                           ),
                         ],
                       ),

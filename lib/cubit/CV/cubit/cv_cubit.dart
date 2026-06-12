@@ -12,6 +12,7 @@ class CvCubit extends Cubit<CvState> {
   String? uploadedCvUrl;
   String? _cvFilePath;
   String? _cvFileName;
+  int cvScore = 0;
 
   CvCubit(this._dio) : super(CvInitial());
 
@@ -135,6 +136,7 @@ class CvCubit extends Cubit<CvState> {
         emit(CvError('Analysis timed out. Please try again.'));
         return;
       }
+      cvScore = (analysis['score'] as num?)?.toInt() ?? 0;
 
       final recsRes = await _dio.get(
         '/recommendations',

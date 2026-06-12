@@ -93,7 +93,6 @@ class _OtpScreenState extends State<OtpScreen>
               descTextStyle: const TextStyle(color: Colors.black),
             ).show().then((_) {
               Navigator.pushAndRemoveUntil(
-                // ignore: use_build_context_synchronously
                 context,
                 MaterialPageRoute(builder: (_) => const Loginscreen()),
                 (route) => false,
@@ -129,7 +128,6 @@ class _OtpScreenState extends State<OtpScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
-                        // ignore: deprecated_member_use
                         colors: [blue.withOpacity(0.2), Colors.transparent],
                       ),
                     ),
@@ -144,7 +142,6 @@ class _OtpScreenState extends State<OtpScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
-                        // ignore: deprecated_member_use
                         colors: [purple.withOpacity(0.18), Colors.transparent],
                       ),
                     ),
@@ -170,11 +167,9 @@ class _OtpScreenState extends State<OtpScreen>
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    // ignore: deprecated_member_use
                                     color: Colors.white.withOpacity(0.06),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      // ignore: deprecated_member_use
                                       color: Colors.white.withOpacity(0.1),
                                     ),
                                   ),
@@ -200,7 +195,6 @@ class _OtpScreenState extends State<OtpScreen>
                                   borderRadius: BorderRadius.circular(18),
                                   boxShadow: [
                                     BoxShadow(
-                                      // ignore: deprecated_member_use
                                       color: blue.withOpacity(0.4),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
