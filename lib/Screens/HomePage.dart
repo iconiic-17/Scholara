@@ -5,7 +5,9 @@ import 'package:grantgo/Screens/RecommendationScreen.dart';
 import 'package:grantgo/Screens/SavedScreen.dart';
 import 'package:grantgo/Screens/ProfileScreen.dart';
 import 'package:grantgo/Screens/aboutScholarshipScreen.dart';
+import 'package:grantgo/Screens/chatbotScreen.dart';
 import 'package:grantgo/Screens/cvScreenState.dart';
+import 'package:grantgo/cubit/chat/cubit/chat_cubit.dart';
 import 'package:grantgo/cubit/scholarship/cubit/saved_scholarship_state.dart';
 import 'package:grantgo/cubit/scholarship/cubit/scholarship_cubit.dart';
 import 'package:grantgo/cubit/scholarship/cubit/scholarship_state.dart';
@@ -429,35 +431,36 @@ class _ExplorePageState extends State<_ExplorePage> {
               ),
             ],
           ),
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: kCardColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: kBorderColor, width: 1.2),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                const Icon(
-                  Icons.notifications_none_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                Positioned(
-                  top: 13,
-                  right: 13,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: kSecondaryColor,
-                      shape: BoxShape.circle,
-                    ),
+          // ── Chat Button (replaces notification icon) ──
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (_) => ChatCubit(),
+                    child: const ChatScreen(),
                   ),
                 ),
-              ],
+              );
+            },
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [kPrimaryColor, Color(0xFF38BDF8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: kBorderColor, width: 1.2),
+              ),
+              child: const Icon(
+                Icons.auto_awesome_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
           ),
         ],

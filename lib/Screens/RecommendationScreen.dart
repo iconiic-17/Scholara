@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grantgo/Screens/aboutScholarshipScreen.dart';
+import 'package:grantgo/Screens/InterviewScreen.dart';
 import 'package:grantgo/cubit/CV/cubit/cv_cubit.dart';
+import 'package:grantgo/cubit/interview/cubit/interview_cubit.dart';
 
 class RecommendationsScreen extends StatefulWidget {
   const RecommendationsScreen({super.key});
@@ -25,8 +27,6 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
   @override
   void initState() {
     super.initState();
-    // ✅ لما الشاشة تفتح، اتحقق من الـ state الحالي
-    // لو مفيش recommendations موجودة، نجيبها تلقائياً
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = context.read<CvCubit>().state;
       final hasRecs = state is CvAnalyzed || state is CvRecommendationsReady;
@@ -314,110 +314,181 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
           highlightColor: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.all(18),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: color.withOpacity(0.4), width: 1),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(icon, color: color, size: 18),
-                      const SizedBox(height: 4),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                // ── الصف الأول: badge + معلومات المنحة ──
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: color.withOpacity(0.4),
+                          width: 1,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          height: 1.35,
-                          letterSpacing: -0.2,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          _miniTag(
-                            funding.toString(),
-                            kGreen,
-                            Icons.account_balance_wallet_outlined,
-                          ),
-                          _miniTag(
-                            degree.toString(),
-                            kBlueLight,
-                            Icons.school_outlined,
-                          ),
-                          _miniTag(
-                            fieldsOfStudy,
-                            kPurpleLight,
-                            Icons.menu_book_outlined,
-                          ),
-                          _miniTag(
-                            location.toString(),
-                            Colors.orange,
-                            Icons.location_on_outlined,
+                          Icon(icon, color: color, size: 18),
+                          const SizedBox(height: 4),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ],
                       ),
-                      if (deadline != null) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 12,
-                              color: Colors.orange.withOpacity(0.8),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              height: 1.35,
+                              letterSpacing: -0.2,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Closing: $deadline',
-                              style: TextStyle(
-                                color: kTextMuted.withOpacity(0.7),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _miniTag(
+                                funding.toString(),
+                                kGreen,
+                                Icons.account_balance_wallet_outlined,
                               ),
+                              _miniTag(
+                                degree.toString(),
+                                kBlueLight,
+                                Icons.school_outlined,
+                              ),
+                              _miniTag(
+                                fieldsOfStudy,
+                                kPurpleLight,
+                                Icons.menu_book_outlined,
+                              ),
+                              _miniTag(
+                                location.toString(),
+                                Colors.orange,
+                                Icons.location_on_outlined,
+                              ),
+                            ],
+                          ),
+                          if (deadline != null) ...[
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 12,
+                                  color: Colors.orange.withOpacity(0.8),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Closing: $deadline',
+                                  style: TextStyle(
+                                    color: kTextMuted.withOpacity(0.7),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: Colors.white.withOpacity(0.15),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // ── زرار Mock Interview ──
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () {
+                    // بناء الـ scholarship map بنفس شكل الـ API
+                    final scholarshipData = {
+                      '_id': scholarship['_id'] ?? '',
+                      'name': scholarship['title'] ?? '',
+                      'location': scholarship['location'] ?? '',
+                      'fundingType': scholarship['fundingType'] ?? '',
+                      'degree': scholarship['degree'] ?? [],
+                      'fieldsOfStudy': scholarship['fieldsOfStudy'] ?? [],
+                      'deadline': scholarship['deadline'] ?? '',
+                    };
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider(
+                          create: (_) => InterviewCubit(),
+                          child: InterviewScreen(scholarship: scholarshipData),
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [kBlue, kPurple],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kBlue.withOpacity(0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: Colors.white.withOpacity(0.15),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.mic_rounded, color: Colors.white, size: 16),
+                        SizedBox(width: 8),
+                        Text(
+                          'Mock Interview',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
